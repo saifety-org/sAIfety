@@ -1,0 +1,4 @@
+Changelog
+- Added retry logic to the HTTP client.
+- Fixed a race condition in the cache.
+- Updated dependencies to their latest versions.

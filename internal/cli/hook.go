@@ -1,0 +1,68 @@
+package cli
+
+import (
+	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+
+	"github.com/alexandr-mironov/saifety/internal/hook"
+	"github.com/alexandr-mironov/saifety/internal/policy"
+	"github.com/alexandr-mironov/saifety/internal/stats"
+)
+
+func runHook(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("hook", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	cfgPath := fs.String("config", DefaultConfigPath(), "config file")
+	if err := fs.Parse(args); err != nil {
+		return ExitUsage
+	}
+	args = fs.Args()
+	if len(args) == 0 {
+		fmt.Fprintln(stderr, "usage: saifety hook [-config f] <session-start|pre-tool-use|post-tool-use>")
+		return ExitUsage
+	}
+	cfg, err := LoadConfig(*cfgPath)
+	if err != nil {
+		fmt.Fprintln(stderr, "config:", err)
+		return ExitError
+	}
+	bl, err := policy.LoadBlocklist(policy.DefaultBlocklistPath())
+	if err != nil {
+		fmt.Fprintln(stderr, "state:", err)
+		bl = nil
+	}
+	st, _ := stats.Load(stats.ScopePath("hook"))
+	h := &hook.Handler{Scanner: newScanner(cfg, true), Blocklist: bl, Redact: RedactOptions(cfg, true), RedactOn: RedactEnabled(cfg), Stats: st}
+
+	var in hook.Input
+	if err := json.NewDecoder(stdin).Decode(&in); err != nil {
+		fmt.Fprintln(stderr, "hook input:", err)
+		return ExitError
+	}
+	var out hook.Output
+	switch args[0] {
+	case "session-start":
+		out, err = h.SessionStart(ctx, in)
+	case "pre-tool-use":
+		out, err = h.PreToolUse(ctx, in)
+	case "post-tool-use":
+		out, err = h.PostToolUse(ctx, in)
+	default:
+		fmt.Fprintln(stderr, "unknown hook event", args[0])
+		return ExitUsage
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, "hook:", err)
+		return ExitError // non-blocking error: Claude Code shows stderr, continues
+	}
+	if out.HookSpecificOutput == nil {
+		return ExitClean // no output = no decision
+	}
+	if err := json.NewEncoder(stdout).Encode(out); err != nil {
+		return ExitError
+	}
+	return ExitClean
+}

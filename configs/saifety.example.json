@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  },
+  "trustedSources": [],
+  "maxDecodeDepth": 3,
+  "maxFileSize": 2097152
+}

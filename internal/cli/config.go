@@ -1,0 +1,85 @@
+package cli
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+
+	"github.com/alexandr-mironov/saifety/internal/mcp"
+)
+
+// Config is saifety.json. The mcpServers block is byte-compatible with
+// Claude Code's .mcp.json so an existing file can be reused as-is.
+type Config struct {
+	MCPServers     map[string]mcp.ServerSpec `json:"mcpServers"`
+	TrustedSources []string                  `json:"trustedSources"`
+	MaxDecodeDepth int                       `json:"maxDecodeDepth"`
+	MaxFileSize    int64                     `json:"maxFileSize"`
+	// ClaudeBinary overrides the `claude` executable used by launch.
+	ClaudeBinary string `json:"claudeBinary"`
+	// Classifier selects the instruction classifier: "onnx" (default;
+	// transformer, auto-downloaded on first run, needs an onnx build),
+	// "lexical" (built-in, no model), or "auto" (onnx if a build/model is
+	// available, else lexical without downloading).
+	Classifier string `json:"classifier"`
+	// Policy is the strictness profile: "strict" (default) or "balanced".
+	Policy string `json:"policy"`
+	// Redact controls masking of secrets and personal data in outputs.
+	Redact RedactConfig `json:"redact"`
+}
+
+// RedactConfig configures the anonymization pass.
+type RedactConfig struct {
+	// Disabled turns off masking of tool outputs (default: enabled).
+	Disabled bool `json:"disabled"`
+	// Keywords are extra literal strings to redact.
+	Keywords []string `json:"keywords"`
+	// Allowlist are substrings that must never be redacted.
+	Allowlist []string `json:"allowlist"`
+	// KeepIP leaves IP addresses unmasked (default: they are masked).
+	KeepIP bool `json:"keepIP"`
+	// MinEntropy enables generic high-entropy token masking when > 0.
+	MinEntropy float64 `json:"minEntropy"`
+	// NoModel disables the PII NER model even when it is present.
+	NoModel bool `json:"noModel"`
+	// NERLabels overrides which NER entities to mask (default: persons and
+	// dates). E.g. ["PER","LOC","ORG","DATE"].
+	NERLabels []string `json:"nerLabels"`
+}
+
+// DefaultConfigPath is $SAIFETY_CONFIG, else ~/.config/saifety/saifety.json.
+// The config is deliberately NOT read from the project directory: a
+// poisoned repository must not be able to declare itself trusted.
+func DefaultConfigPath() string {
+	if p := os.Getenv("SAIFETY_CONFIG"); p != "" {
+		return p
+	}
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "saifety.json"
+	}
+	return filepath.Join(dir, "saifety", "saifety.json")
+}
+
+// LoadConfig reads path; a missing file yields the zero config, not an error.
+func LoadConfig(path string) (Config, error) {
+	var c Config
+	b, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return c, nil
+	}
+	if err != nil {
+		return c, err
+	}
+	return c, json.Unmarshal(b, &c)
+}
+
+func (c Config) trusted(name string) bool {
+	for _, t := range c.TrustedSources {
+		if t == name {
+			return true
+		}
+	}
+	return false
+}

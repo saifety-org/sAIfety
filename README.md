@@ -167,6 +167,11 @@ bin/saifety install cursor -dry-run       # предпросмотр перех�
 
 ## Документация
 
+- **[docs/model-comparison.md](docs/model-comparison.md)** — воспроизводимое
+  сравнение обученного классификатора с DeBERTa: `make compare` (весь цикл на Go).
+- **[testdata/adversarial/README.md](testdata/adversarial/README.md)** — парный
+  регрессионный корпус атак и безопасных примеров, матрица конфигураций и
+  метрики. Запуск: `make test-adversarial`.
 - **[docs/configuration.md](docs/configuration.md)** — конфигурация: файл
   `saifety.json`, классификатор и модель, профили строгости, команды,
   перехват конфига Claude, запуск Claude под защитой (launch и хуки),

@@ -27,6 +27,7 @@ type onnxClassifier struct {
 	session  *ort.DynamicAdvancedSession
 	injIndex int
 	mu       sync.Mutex // ORT sessions are not guaranteed goroutine-safe
+	tkMu     sync.Mutex // protects tokenizer configuration during token counting
 }
 
 // ONNXConfig points the classifier at its on-disk artifacts.
@@ -63,18 +64,47 @@ func NewONNX(cfg ONNXConfig) (Classifier, error) {
 	return &onnxClassifier{tk: tk, session: sess, injIndex: cfg.InjectionIndex}, nil
 }
 
-// Score returns P(injection) in [0,1] for text. It never panics: the
-// upstream SentencePiece tokenizer can panic on some inputs, so a recover
-// degrades to "no model signal" (the rule-based detectors still apply).
-func (c *onnxClassifier) Score(text string) (score float64) {
+// Score retains the runtime fallback, while benchmarks use ScoreChecked so
+// tokenizer or inference failures cannot silently become benign predictions.
+func (c *onnxClassifier) Score(text string) float64 {
+	score, _ := c.ScoreChecked(text)
+	return score
+}
+
+// TokenCount includes special tokens. Benchmarks exclude oversized inputs
+// from the shared-window comparison instead of giving one model more text.
+func (c *onnxClassifier) TokenCount(text string) (int, error) {
+	c.tkMu.Lock()
+	defer c.tkMu.Unlock()
+	truncation := c.tk.GetTruncation()
+	c.tk.WithTruncation(nil)
+	defer c.tk.WithTruncation(truncation)
+	en, err := safeEncode(c.tk, text)
+	if err != nil {
+		return 0, err
+	}
+	if en == nil || len(en.Ids) == 0 {
+		return 0, fmt.Errorf("empty tokenization")
+	}
+	return len(en.Ids), nil
+}
+
+func (c *onnxClassifier) encode(text string) (*tokenizer.Encoding, error) {
+	c.tkMu.Lock()
+	defer c.tkMu.Unlock()
+	return safeEncode(c.tk, text)
+}
+
+// ScoreChecked exposes errors for evaluation; Score supplies runtime fallback.
+func (c *onnxClassifier) ScoreChecked(text string) (score float64, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			score = 0
+			score, err = 0, fmt.Errorf("onnx inference panic: %v", r)
 		}
 	}()
-	en, err := safeEncode(c.tk, text)
+	en, err := c.encode(text)
 	if err != nil || en == nil || len(en.Ids) == 0 {
-		return 0
+		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
 	ids64 := make([]int64, 0, maxSeq)
 	for i, id := range en.Ids {
@@ -91,17 +121,17 @@ func (c *onnxClassifier) Score(text string) (score float64) {
 	shape := ort.NewShape(1, int64(n))
 	idT, err := ort.NewTensor(shape, ids64)
 	if err != nil {
-		return 0
+		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
 	defer idT.Destroy()
 	mT, err := ort.NewTensor(shape, mask)
 	if err != nil {
-		return 0
+		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
 	defer mT.Destroy()
 	outT, err := ort.NewEmptyTensor[float32](ort.NewShape(1, 2))
 	if err != nil {
-		return 0
+		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
 	defer outT.Destroy()
 
@@ -109,9 +139,9 @@ func (c *onnxClassifier) Score(text string) (score float64) {
 	err = c.session.Run([]ort.Value{idT, mT}, []ort.Value{outT})
 	c.mu.Unlock()
 	if err != nil {
-		return 0
+		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
-	return softmax2(outT.GetData(), c.injIndex)
+	return softmax2(outT.GetData(), c.injIndex), nil
 }
 
 // batchSize bounds how many paragraphs are run through the model at once.
@@ -139,7 +169,7 @@ func (c *onnxClassifier) scoreBatch(texts []string, out []float64) {
 	encs := make([][]int64, len(texts))
 	maxLen := 1
 	for i, t := range texts {
-		en, err := safeEncode(c.tk, t)
+		en, err := c.encode(t)
 		if err != nil || en == nil || len(en.Ids) == 0 {
 			continue
 		}

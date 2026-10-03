@@ -43,13 +43,16 @@ func scoreFile(t *testing.T, sc *scan.Scanner, path string) scan.Verdict {
 func listCorpus(t *testing.T, sub string) []string {
 	entries, err := os.ReadDir(filepath.Join(corpusDir, sub))
 	if err != nil {
-		t.Skipf("corpus %s not present: %v", sub, err)
+		t.Fatalf("corpus %s not present: %v", sub, err)
 	}
 	var out []string
 	for _, e := range entries {
 		if !e.IsDir() {
 			out = append(out, filepath.Join(corpusDir, sub, e.Name()))
 		}
+	}
+	if len(out) == 0 {
+		t.Fatalf("corpus %s is empty", sub)
 	}
 	return out
 }
@@ -60,8 +63,12 @@ func TestCorpusMetrics(t *testing.T) {
 	ben := listCorpus(t, "benign")
 
 	var tp, fn, tn, fp int
+	var interventionTP, warningFP int
 	for _, p := range mal {
 		v := scoreFile(t, sc, p)
+		if v.Level >= scan.LevelMedium {
+			interventionTP++
+		}
 		if v.Level >= scan.LevelBase {
 			tp++
 		} else {
@@ -71,6 +78,9 @@ func TestCorpusMetrics(t *testing.T) {
 	}
 	for _, p := range ben {
 		v := scoreFile(t, sc, p)
+		if v.Level >= scan.LevelBase {
+			warningFP++
+		}
 		if v.Level <= maxBenignLevel {
 			tn++
 		} else {
@@ -84,16 +94,19 @@ func TestCorpusMetrics(t *testing.T) {
 	}
 
 	total := tp + fn + tn + fp
-	precision := ratio(tp, tp+fp)
 	recall := ratio(tp, tp+fn)
-	t.Logf("corpus: %d samples | recall=%.2f precision=%.2f | TP=%d FN=%d TN=%d FP=%d",
-		total, recall, precision, tp, fn, tn, fp)
+	// A precision metric must use the same positive threshold for both
+	// labels. Report warning and intervention thresholds independently.
+	t.Logf("corpus: %d samples | threshold=base precision=%.3f recall=%.3f TP=%d FN=%d TN=%d FP=%d",
+		total, ratio(tp, tp+warningFP), recall, tp, fn, len(ben)-warningFP, warningFP)
+	t.Logf("threshold=medium precision=%.3f recall=%.3f TP=%d FN=%d TN=%d FP=%d",
+		ratio(interventionTP, interventionTP+fp), ratio(interventionTP, len(mal)), interventionTP, len(mal)-interventionTP, tn, fp)
 
 	if recall < 1.0 {
 		t.Errorf("recall %.2f < 1.0: every malicious sample must be caught", recall)
 	}
-	if precision < 1.0 {
-		t.Errorf("precision %.2f < 1.0: benign samples must not exceed %s", precision, maxBenignLevel)
+	if fp != 0 {
+		t.Errorf("%d benign samples exceed %s", fp, maxBenignLevel)
 	}
 }
 

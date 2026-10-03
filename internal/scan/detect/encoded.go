@@ -17,8 +17,8 @@ func (Encoded) Name() string { return "encoded" }
 func (Encoded) Detect(doc *scan.Document, text string) []scan.Finding {
 	var out []scan.Finding
 	for _, c := range decode.Candidates(text) {
-		if c.Encoding == "rot13" {
-			continue // whole-text guess; the inner findings speak for themselves
+		if c.Encoding == "rot13" || c.Encoding == "entities-context" {
+			continue // contextual views: only findings in the decoded text count
 		}
 		conf := 0.45
 		if doc.Kind == scan.KindInstructions || doc.Kind == scan.KindToolDescription {

@@ -1,5 +1,6 @@
 /bin/
 /dist/
+/artifacts/
 *.test
 *.out
 .DS_Store

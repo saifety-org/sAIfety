@@ -1,91 +1,162 @@
 //go:build onnx
 
-// Command bench compares our embedded trained classifier against the DeBERTa
-// ONNX model on the same held-out data, so the value of the ~738MB model can
-// be judged after the classifier work. Build with -tags onnx; needs the model
-// in the cache (saifety model pull).
+// Command bench scores frozen validation/test inputs with both models.
+// No rule detectors, gating, training or threshold selection happens here.
 package main
 
 import (
+	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"flag"
 	"fmt"
-	"math/rand"
+	"io"
+	"math"
 	"os"
-	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/alexandr-mironov/saifety/internal/classifier"
+	"github.com/alexandr-mironov/saifety/internal/evaluation"
 	"github.com/alexandr-mironov/saifety/internal/model"
 	"github.com/alexandr-mironov/saifety/internal/scan/classify"
 )
 
-type scorer struct {
-	name string
-	fn   func(string) float64
+type sample = evaluation.Sample
+type result = evaluation.Prediction
+type checked interface {
+	ScoreChecked(string) (float64, error)
+	TokenCount(string) (int, error)
 }
 
-func metrics(name string, s []classifier.Sample, fn func(string) float64) {
-	var tp, fp, tn, fn_ int
-	start := time.Now()
-	for _, x := range s {
-		p := fn(x.Text) >= 0.5
-		switch {
-		case p && x.Label == 1:
-			tp++
-		case p && x.Label == 0:
-			fp++
-		case !p && x.Label == 0:
-			tn++
-		default:
-			fn_++
-		}
-	}
-	dur := time.Since(start)
-	acc := float64(tp+tn) / float64(len(s))
-	prec := 1.0
-	if tp+fp > 0 {
-		prec = float64(tp) / float64(tp+fp)
-	}
-	rec := 1.0
-	if tp+fn_ > 0 {
-		rec = float64(tp) / float64(tp+fn_)
-	}
-	fmt.Printf("%-12s acc=%.3f prec=%.3f rec=%.3f | %d samples in %v (%.1f/s)\n",
-		name, acc, prec, rec, len(s), dur.Round(time.Millisecond), float64(len(s))/dur.Seconds())
-}
-
-func main() {
-	// Use the SAME held-out split gen uses (seed 1, first 15%): rows our
-	// model never trained on. DeBERTa never saw any external data, so this is
-	// fair to both. Caveat: the held-out is from the same public sources our
-	// model trained on, so our model still has a same-distribution edge; a
-	// neutral benchmark (e.g. Lakera PINT) would be more balanced but its
-	// data is private.
-	all := classifier.LoadCorpus("internal/classifier/data/external.jsonl")
-	rng := rand.New(rand.NewSource(1))
-	rng.Shuffle(len(all), func(i, j int) { all[i], all[j] = all[j], all[i] })
-	data := all[:len(all)*15/100]
-
-	our, err := classifier.Default()
+func must(err error) {
 	if err != nil {
 		panic(err)
 	}
-	metrics("trained(ours)", data, our.Score)
-
-	cache := os.Getenv("SAIFETY_CACHE")
-	if cache == "" {
-		home, _ := os.UserHomeDir()
-		cache = filepath.Join(home, ".cache", "saifety")
+}
+func hash(path string) string {
+	f, err := os.Open(path)
+	must(err)
+	defer f.Close()
+	h := sha256.New()
+	_, err = io.Copy(h, f)
+	must(err)
+	return hex.EncodeToString(h.Sum(nil))
+}
+func main() {
+	data := flag.String("data", "artifacts/comparison/evaluation.jsonl", "frozen evaluation JSONL")
+	weights := flag.String("weights", "artifacts/comparison/weights.json", "explicit candidate weights")
+	out := flag.String("out", "artifacts/comparison/predictions.jsonl", "per-sample output")
+	flag.Parse()
+	b, err := os.ReadFile(*weights)
+	must(err)
+	var trainingMeta map[string]any
+	metadata, err := os.ReadFile(*weights + ".meta.json")
+	must(err)
+	must(json.Unmarshal(metadata, &trainingMeta))
+	if trainingMeta["weights_sha256"] != hash(*weights) {
+		panic("training metadata does not match weights")
 	}
-	b, _ := model.DefaultBundle()
-	deberta, err := classify.NewONNX(classify.ONNXConfig{
-		LibraryPath:    model.RuntimeLibPath(),
-		ModelPath:      model.Path(b.Model),
-		TokenizerPath:  model.Path(b.Tokenizer),
-		InjectionIndex: b.InjectionIndex,
-	})
-	if err != nil {
-		fmt.Println("DeBERTa unavailable:", err)
-		return
+	loadStart := time.Now()
+	ours, err := classifier.Load(b)
+	must(err)
+	if ours.Dim != classifier.Dim || len(ours.Weights) != classifier.Dim {
+		panic("invalid classifier dimensions")
 	}
-	metrics("deberta-738MB", data, deberta.Score)
+	oursLoad := time.Since(loadStart).Seconds()
+	shipped, err := classifier.Default()
+	must(err)
+	bundle, err := model.DefaultBundle()
+	must(err)
+	loadStart = time.Now()
+	c, err := classify.NewONNX(classify.ONNXConfig{LibraryPath: model.RuntimeLibPath(), ModelPath: model.Path(bundle.Model), TokenizerPath: model.Path(bundle.Tokenizer), InjectionIndex: bundle.InjectionIndex})
+	must(err)
+	debertaLoad := time.Since(loadStart).Seconds()
+	dc, ok := c.(checked)
+	if !ok {
+		panic("ONNX backend must expose checked inference")
+	}
+	f, err := os.Open(*data)
+	must(err)
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 4096), 4<<20)
+	var rows []sample
+	seen := map[string]bool{}
+	for scanner.Scan() {
+		var row sample
+		must(json.Unmarshal(scanner.Bytes(), &row))
+		if row.ID == "" || seen[row.ID] || row.Text == "" || (row.Label != 0 && row.Label != 1) || (row.Split != "validation" && row.Split != "test") {
+			panic("invalid or duplicate evaluation row")
+		}
+		seen[row.ID] = true
+		rows = append(rows, row)
+	}
+	must(scanner.Err())
+	if len(rows) == 0 {
+		panic("empty evaluation corpus")
+	}
+	// Warm both models equally; do not include initialization in inference time.
+	for i := 0; i < 3; i++ {
+		ours.Score("The build completed successfully.")
+		shipped.Score("The build completed successfully.")
+		_, err = dc.ScoreChecked("The build completed successfully.")
+		must(err)
+	}
+	output, err := os.Create(*out)
+	must(err)
+	defer output.Close()
+	enc := json.NewEncoder(output)
+	excluded := 0
+	for i, row := range rows {
+		n, err := dc.TokenCount(row.Text)
+		must(err)
+		r := result{Sample: row, Tokens: n}
+		if n > 512 {
+			r.Excluded = "over_shared_512_token_window"
+			excluded++
+		} else {
+			scoreOurs := func() {
+				start := time.Now()
+				r.Ours = ours.Score(row.Text)
+				r.OursMS = float64(time.Since(start)) / float64(time.Millisecond)
+			}
+			scoreDeberta := func() {
+				start := time.Now()
+				r.Deberta, err = dc.ScoreChecked(row.Text)
+				must(err)
+				r.DebertaMS = float64(time.Since(start)) / float64(time.Millisecond)
+			}
+			scoreShipped := func() {
+				start := time.Now()
+				r.Shipped = shipped.Score(row.Text)
+				r.ShippedMS = float64(time.Since(start)) / float64(time.Millisecond)
+			}
+			// Alternate order; run sequentially to avoid contention between models.
+			if i%2 == 0 {
+				scoreOurs()
+				scoreShipped()
+				scoreDeberta()
+			} else {
+				scoreDeberta()
+				scoreShipped()
+				scoreOurs()
+			}
+			if math.IsNaN(r.Ours) || math.IsNaN(r.Shipped) || math.IsNaN(r.Deberta) || r.Ours < 0 || r.Ours > 1 || r.Shipped < 0 || r.Shipped > 1 || r.Deberta < 0 || r.Deberta > 1 {
+				panic("invalid score")
+			}
+		}
+		must(enc.Encode(r))
+		if (i+1)%50 == 0 {
+			fmt.Fprintf(os.Stderr, "scored %d/%d (excluded long=%d)\n", i+1, len(rows), excluded)
+		}
+	}
+	must(output.Sync())
+	meta := map[string]any{"go": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH, "logical_cpus": runtime.NumCPU(), "data_sha256": hash(*data), "weights_sha256": hash(*weights), "shipped_weights_sha256": hash("internal/classifier/weights.json"), "deberta_sha256": hash(model.Path(bundle.Model)), "tokenizer_sha256": hash(model.Path(bundle.Tokenizer)), "runtime_sha256": hash(model.RuntimeLibPath()), "ours_load_seconds": oursLoad, "deberta_load_seconds": debertaLoad, "rows": len(rows), "excluded_long": excluded, "inference_errors": 0, "batch_size": 1, "warmup": 3, "max_shared_tokens": 512, "preprocessing": "identical raw text; model-native feature/tokenizer transforms; no rules or gating"}
+	meta["training"] = trainingMeta
+	b, err = json.MarshalIndent(meta, "", "  ")
+	must(err)
+	must(os.WriteFile(*out+".meta.json", b, 0644))
+	fmt.Fprintf(os.Stderr, "finished: %d scored, %d excluded; %s\n", len(rows)-excluded, excluded, *out)
 }

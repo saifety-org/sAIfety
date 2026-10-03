@@ -3,6 +3,7 @@ package classifier
 import (
 	"math"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -30,9 +31,21 @@ func Train(samples []Sample, opts TrainOptions) *Model {
 	}
 	rng := rand.New(rand.NewSource(opts.Seed))
 	// Precompute features once.
-	feats := make([]map[int]float64, len(samples))
+	type feature struct {
+		key   int
+		value float64
+	}
+	feats := make([][]feature, len(samples))
 	for i, s := range samples {
-		feats[i] = Features(s.Text)
+		f := Features(s.Text)
+		keys := make([]int, 0, len(f))
+		for k := range f {
+			keys = append(keys, k)
+		}
+		sort.Ints(keys)
+		for _, k := range keys {
+			feats[i] = append(feats[i], feature{k, f[k]})
+		}
 	}
 	w := make([]float64, Dim)
 	b := 0.0
@@ -42,12 +55,13 @@ func Train(samples []Sample, opts TrainOptions) *Model {
 		for _, i := range idx {
 			f, y := feats[i], samples[i].Label
 			z := b
-			for j, v := range f {
-				z += w[j] * v
+			for _, item := range f {
+				z += w[item.key] * item.value
 			}
 			p := sigmoid(z)
 			g := p - y // gradient of log-loss wrt z
-			for j, v := range f {
+			for _, item := range f {
+				j, v := item.key, item.value
 				w[j] -= opts.LR * (g*v + opts.L2*w[j])
 			}
 			b -= opts.LR * g

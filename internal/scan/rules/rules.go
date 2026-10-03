@@ -39,21 +39,21 @@ type Pattern struct {
 // Instruction patterns: text addressed to the model rather than to a human.
 // Both English and Russian forms; the classifier will replace most of these.
 var Instruction = []Pattern{
-	{scan.CatInstructionOverride, `ignore (all |any |the )?(previous|prior|above|earlier) (instructions|prompts|rules|directions)`, 0.95, "classic override"},
-	{scan.CatInstructionOverride, `disregard (all |any |the )?(previous|prior|above) (instructions|prompts|rules)`, 0.95, ""},
-	{scan.CatInstructionOverride, `forget (everything|all|your) (you|instructions|rules)`, 0.85, ""},
-	{scan.CatInstructionOverride, `(игнорируй|проигнорируй|забудь|отбрось) (все |любые |предыдущие |прошлые |вышеуказанные )*(инструкции|правила|указания|промпт)`, 0.95, "russian override"},
-	{scan.CatInstructionOverride, `(you are now|from now on you are|act as|pretend (to be|you are)|притворись|ты теперь|с этого момента ты)`, 0.6, "role swap"},
-	{scan.CatInstructionOverride, `do not (tell|inform|mention|reveal)( this)? (to )?the user`, 0.9, "concealment"},
-	{scan.CatInstructionOverride, `(не (говори|сообщай|рассказывай) (об этом )?пользователю)`, 0.9, "concealment ru"},
-	{scan.CatInstructionOverride, `(without|before) (asking|confirming|telling)( the)? user`, 0.6, ""},
-	{scan.CatInstructionOverride, `(important|note|attention)( to| for)? (ai|llm|assistant|agent|claude|gpt|model)s?\b`, 0.7, "addressed to the model"},
-	{scan.CatInstructionOverride, `(важно|внимание|инструкция) (для|к) (ии|ai|ассистент|агент|модел|claude)`, 0.7, "addressed to the model ru"},
-	{scan.CatSystemPrompt, `<\s*/?\s*(system|assistant|human|user|tool_result|function_call|instructions)\s*>`, 0.8, "fake chat tags"},
+	{scan.CatInstructionOverride, `ignore\s+(all\s+|any\s+|the\s+)?(previous|prior|above|earlier)\s+(instructions|prompts|rules|directions)`, 0.95, "classic override"},
+	{scan.CatInstructionOverride, `disregard\s+(all\s+|any\s+|the\s+)?(previous|prior|above)\s+(instructions|prompts|rules)`, 0.95, ""},
+	{scan.CatInstructionOverride, `forget\s+(everything|all|your)\s+(you|instructions|rules)`, 0.85, ""},
+	{scan.CatInstructionOverride, `(игнорируй|проигнорируй|забудь|отбрось)\s+(все\s+|любые\s+|предыдущие\s+|прошлые\s+|вышеуказанные\s+)*(инструкции|правила|указания|промпт)`, 0.95, "russian override"},
+	{scan.CatInstructionOverride, `(you\s+are\s+now|from\s+now\s+on\s+you\s+are|act\s+as|pretend\s+(to\s+be|you\s+are)|притворись|ты\s+теперь|с\s+этого\s+момента\s+ты)`, 0.6, "role swap"},
+	{scan.CatInstructionOverride, `do\s+not\s+(tell|inform|mention|reveal)(\s+this)?\s+(to\s+)?the\s+user`, 0.9, "concealment"},
+	{scan.CatInstructionOverride, `(не\s+(говори|сообщай|рассказывай)\s+(об\s+этом\s+)?пользователю)`, 0.9, "concealment ru"},
+	{scan.CatInstructionOverride, `(without|before)\s+(asking|confirming|telling)(\s+the)?\s+user`, 0.6, ""},
+	{scan.CatInstructionOverride, `(important|note|attention)(\s+to|\s+for)?\s+(ai|llm|assistant|agent|claude|gpt|model)s?\b`, 0.7, "addressed to the model"},
+	{scan.CatInstructionOverride, `(важно|внимание|инструкция)\s+(для|к)\s+(ии|ai|ассистент|агент|модел|claude)`, 0.7, "addressed to the model ru"},
+	{scan.CatSystemPrompt, `<\s*/?\s*(system|developer|assistant|human|user|tool_result|function_call|instructions)(?:\s+[^<>]*|\s*)/?>`, 0.8, "fake chat tags"},
 	{scan.CatSystemPrompt, `\[(INST|/INST|SYSTEM|SYS)\]|<<SYS>>|<\|(im_start|im_end|system|user|assistant)\|>`, 0.9, "model chat template"},
 	{scan.CatSystemPrompt, `^\s*(system|assistant|developer)\s*:\s*\S`, 0.5, "role prefix at line start"},
-	{scan.CatSystemPrompt, `(system prompt|системн(ый|ого) промпт)`, 0.5, "mentions system prompt"},
-	{scan.CatSystemPrompt, `<system-reminder>|<function_calls>|<invoke `, 0.9, "harness control tags in data"},
+	{scan.CatSystemPrompt, `(system\s+prompt|системн(ый|ого)\s+промпт)`, 0.5, "mentions system prompt"},
+	{scan.CatSystemPrompt, `<\s*/?\s*(system-reminder|function_calls|invoke)(?:\s+[^<>]*|\s*)/?>`, 0.9, "harness control tags in data"},
 }
 
 // Weak patterns are phrases that are common in instructions to a model but

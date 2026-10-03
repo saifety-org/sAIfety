@@ -3,6 +3,7 @@ package classifier
 import (
 	"encoding/json"
 	"math"
+	"sort"
 )
 
 // Model is a logistic-regression classifier over the hashed feature space.
@@ -21,7 +22,13 @@ type Model struct {
 // Predict returns the probability for an already-extracted feature vector.
 func (m *Model) Predict(f map[int]float64) float64 {
 	z := m.Bias
-	for i, v := range f {
+	keys := make([]int, 0, len(f))
+	for i := range f {
+		keys = append(keys, i)
+	}
+	sort.Ints(keys)
+	for _, i := range keys {
+		v := f[i]
 		if i >= 0 && i < len(m.Weights) {
 			z += m.Weights[i] * v
 		}

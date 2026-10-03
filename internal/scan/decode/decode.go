@@ -48,6 +48,7 @@ var (
 	reURLEnc   = regexp.MustCompile(`(?:%[0-9a-fA-F]{2}){8,}`)
 	reEscapes  = regexp.MustCompile(`(?:\\x[0-9a-fA-F]{2}|\\u\{?[0-9a-fA-F]{4,6}\}?|\\[0-7]{3}){6,}`)
 	reEntities = regexp.MustCompile(`(?:&#x?[0-9a-fA-F]{1,6};|&[a-zA-Z]{2,8};){5,}`)
+	reEntity   = regexp.MustCompile(`&#(?:[0-9]{1,7}|[xX][0-9a-fA-F]{1,6});|&[a-zA-Z][a-zA-Z0-9]{1,31};`)
 	reCharCode = regexp.MustCompile(`(?i)(?:chr\(\d{2,3}\)|fromCharCode\(|\bchar\(\d{2,3}\)|\b(?:\d{2,3}\s*[, ]\s*){7,}\d{2,3})`)
 	reNumbers  = regexp.MustCompile(`\d{2,3}`)
 	reJSONStr  = regexp.MustCompile(`"(?:[^"\\\n]|\\.){16,}"`)
@@ -123,6 +124,20 @@ func Candidates(text string) []Candidate {
 		if s != text[m[0]:m[1]] {
 			add("entities", m, []byte(s))
 		}
+	}
+	// Partial encoding (e.g. &#73;gnore) needs its surrounding words to
+	// reconstruct an instruction. Decode bounded paragraphs, retaining the
+	// outer span for sanitization. This view alone is not an encoded-payload
+	// finding: ordinary HTML documentation uses entities legitimately.
+	offset := 0
+	for _, paragraph := range strings.Split(text, "\n\n") {
+		if len(paragraph) <= MaxDecoded && reEntity.MatchString(paragraph) {
+			decoded := html.UnescapeString(paragraph)
+			if decoded != paragraph {
+				add("entities-context", []int{offset, offset + len(paragraph)}, []byte(decoded))
+			}
+		}
+		offset += len(paragraph) + 2
 	}
 	for _, m := range charCodeRegions(text) {
 		var b strings.Builder

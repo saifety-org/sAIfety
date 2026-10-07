@@ -15,11 +15,9 @@ import (
 // newScanner wires the default detectors, the selected instruction
 // classifier and the policy into one scanner. Every subcommand goes through
 // here so scan, proxy and hook always agree on what is dangerous.
-// useModel decides whether the heavy transformer models (injection
-// classifier and PII NER) are used. They run per input, which is right for
-// the runtime paths (proxy, hook) but too slow for bulk repository scans, so
-// scan defaults to the fast lexical classifier. An explicit cfg.Classifier
-// overrides the default either way.
+// useModel enables the cached PII NER model for runtime paths and deep scans.
+// The instruction classifier is selected by cfg.Classifier in every mode;
+// its default is the embedded trained model.
 func newScanner(cfg Config, useModel bool) *scan.Scanner {
 	sc, _ := newScannerAndPolicy(cfg, useModel)
 	return sc
@@ -122,7 +120,7 @@ func classifierFor(cfg Config, useModel bool) classify.Classifier {
 			fmt.Fprintln(os.Stderr, "saifety: no model bundle for this platform, using lexical:", err)
 			return classify.Lexical{}
 		}
-		// onnx and the default: download the model on first use. auto: only
+		// onnx: download the model on first use. auto: only
 		// use a model that is already present, never block on a download.
 		if !b.Present() {
 			if mode == "auto" {

@@ -1,6 +1,6 @@
 # Builds:
-#   build        transformer build (-tags onnx, needs a C compiler); provisions
-#                the DeBERTa model on first runtime use.
+#   build        ONNX-enabled build (-tags onnx, needs a C compiler).
+#                Uses the embedded classifier unless configured otherwise.
 #   build-lite   pure-Go build (no cgo, no native runtime, embedded classifier).
 #
 # Install:
@@ -13,7 +13,7 @@ PREFIX ?= /usr/local
 VERSION := $(shell date +%Y-%m-%d-%H%M%S)
 LDFLAGS := -X github.com/saifety-org/sAIfety/internal/cli.Version=$(VERSION)
 
-.PHONY: build build-lite install install-lite install-bin install-bin-lite update reset-state test vet run-scan
+.PHONY: build build-lite install install-lite install-bin install-bin-lite update reset-state test vet
 
 build:
 	go build -tags onnx -ldflags "$(LDFLAGS)" -o bin/saifety ./cmd/saifety
@@ -52,9 +52,6 @@ test:
 
 vet:
 	go vet ./...
-
-run-scan: build
-	./bin/saifety scan testdata
 
 # verify: confirm the installed binary matches a fresh build (same checksum).
 verify: build

@@ -2,12 +2,12 @@
 # sAIfety installer — downloads a prebuilt binary for your OS/arch and installs
 # it to a directory on your PATH. No Go toolchain required.
 #
-#   curl -fsSL https://raw.githubusercontent.com/alexandr-mironov/saifety/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/saifety-org/sAIfety/main/scripts/install.sh | sh
 #
 # Overrides: SAIFETY_VERSION (tag, default: latest), PREFIX (install dir prefix).
 set -eu
 
-REPO="alexandr-mironov/saifety"
+REPO="saifety-org/sAIfety"
 VERSION="${SAIFETY_VERSION:-latest}"
 
 os=$(uname -s | tr '[:upper:]' '[:lower:]')

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alexandr-mironov/saifety/internal/mcp"
+	"github.com/saifety-org/sAIfety/internal/mcp"
 )
 
 // Config is saifety.json. The mcpServers block is byte-compatible with
@@ -18,10 +18,9 @@ type Config struct {
 	MaxFileSize    int64                     `json:"maxFileSize"`
 	// ClaudeBinary overrides the `claude` executable used by launch.
 	ClaudeBinary string `json:"claudeBinary"`
-	// Classifier selects the instruction classifier: "onnx" (default;
-	// transformer, auto-downloaded on first run, needs an onnx build),
-	// "lexical" (built-in, no model), or "auto" (onnx if a build/model is
-	// available, else lexical without downloading).
+	// Classifier selects "trained" (default, embedded model), "lexical"
+	// (heuristics), "onnx" (transformer, downloaded on first use; requires
+	// an onnx build), or "auto" (cached onnx, otherwise lexical).
 	Classifier string `json:"classifier"`
 	// Policy is the strictness profile: "strict" (default) or "balanced".
 	Policy string `json:"policy"`

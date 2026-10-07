@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 // SARIF writes the summary as SARIF 2.1.0, the standard static-analysis
@@ -45,7 +45,7 @@ func SARIF(w io.Writer, s *Summary) error {
 		Runs: []sarifRun{{
 			Tool: sarifTool{Driver: sarifDriver{
 				Name:           "sAIfety",
-				InformationURI: "https://github.com/alexandr-mironov/saifety",
+				InformationURI: "https://github.com/saifety-org/sAIfety",
 				Rules:          ruleList,
 			}},
 			Results: results,

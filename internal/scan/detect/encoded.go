@@ -1,9 +1,9 @@
 package detect
 
 import (
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/decode"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/decode"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Encoded reports blobs that decode to readable text. The scanner separately

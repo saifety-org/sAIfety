@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/report"
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/aggregate"
-	"github.com/alexandr-mironov/saifety/internal/scan/extract"
-	"github.com/alexandr-mironov/saifety/internal/stats"
-	"github.com/alexandr-mironov/saifety/internal/walk"
+	"github.com/saifety-org/sAIfety/internal/report"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/aggregate"
+	"github.com/saifety-org/sAIfety/internal/scan/extract"
+	"github.com/saifety-org/sAIfety/internal/stats"
+	"github.com/saifety-org/sAIfety/internal/walk"
 )
 
 func runScan(ctx context.Context, args []string, stdout, stderr io.Writer) int {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alexandr-mironov/saifety/internal/stats"
+	"github.com/saifety-org/sAIfety/internal/stats"
 )
 
 func runStatistics(ctx context.Context, args []string, stdout, stderr io.Writer) int {

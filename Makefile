@@ -1,7 +1,7 @@
 # Builds:
 #   build        transformer build (-tags onnx, needs a C compiler); provisions
 #                the DeBERTa model on first runtime use.
-#   build-lite   pure-Go build (no cgo, no native runtime, lexical classifier).
+#   build-lite   pure-Go build (no cgo, no native runtime, embedded classifier).
 #
 # Install:
 #   install      go install into $(go env GOPATH)/bin (needs Go + that dir on PATH).
@@ -11,9 +11,9 @@
 
 PREFIX ?= /usr/local
 VERSION := $(shell date +%Y-%m-%d-%H%M%S)
-LDFLAGS := -X github.com/alexandr-mironov/saifety/internal/cli.Version=$(VERSION)
+LDFLAGS := -X github.com/saifety-org/sAIfety/internal/cli.Version=$(VERSION)
 
-.PHONY: build build-lite install install-lite install-bin install-bin-lite update reset-state test test-adversarial compare vet run-scan
+.PHONY: build build-lite install install-lite install-bin install-bin-lite update reset-state test vet run-scan
 
 build:
 	go build -tags onnx -ldflags "$(LDFLAGS)" -o bin/saifety ./cmd/saifety
@@ -49,18 +49,6 @@ _copybin:
 
 test:
 	go test ./...
-
-test-adversarial:
-	go test ./internal/scan ./internal/scan/decode ./internal/mcp -run 'Adversarial|PartialEntity|CorpusMetrics' -count=1 -v
-
-# Requires the cached DeBERTa/ONNX bundle. All preparation and metrics use Go.
-# Candidate weights are kept separate from the embedded production model.
-compare:
-	go run ./cmd/comparison prepare
-	go run ./internal/classifier/gen -train artifacts/comparison/train.jsonl -out artifacts/comparison/weights.json -seed 1
-	go build -tags onnx -o bin/bench ./cmd/bench
-	./bin/bench
-	go run ./cmd/comparison report
 
 vet:
 	go vet ./...

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/normalize"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/normalize"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Obfuscation flags text that is deliberately scrambled to slip an

@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/alexandr-mironov/saifety/internal/onnxenv"
+	"github.com/saifety-org/sAIfety/internal/onnxenv"
 	"github.com/sugarme/tokenizer"
 	"github.com/sugarme/tokenizer/pretrained"
 	ort "github.com/yalue/onnxruntime_go"
@@ -64,15 +64,15 @@ func NewONNX(cfg ONNXConfig) (Classifier, error) {
 	return &onnxClassifier{tk: tk, session: sess, injIndex: cfg.InjectionIndex}, nil
 }
 
-// Score retains the runtime fallback, while benchmarks use ScoreChecked so
-// tokenizer or inference failures cannot silently become benign predictions.
+// Score retains the runtime fallback. ScoreChecked exposes tokenizer and
+// inference failures to callers that need explicit error handling.
 func (c *onnxClassifier) Score(text string) float64 {
 	score, _ := c.ScoreChecked(text)
 	return score
 }
 
-// TokenCount includes special tokens. Benchmarks exclude oversized inputs
-// from the shared-window comparison instead of giving one model more text.
+// TokenCount includes special tokens and disables truncation while counting,
+// so callers can detect inputs exceeding the model's context window.
 func (c *onnxClassifier) TokenCount(text string) (int, error) {
 	c.tkMu.Lock()
 	defer c.tkMu.Unlock()
@@ -95,7 +95,7 @@ func (c *onnxClassifier) encode(text string) (*tokenizer.Encoding, error) {
 	return safeEncode(c.tk, text)
 }
 
-// ScoreChecked exposes errors for evaluation; Score supplies runtime fallback.
+// ScoreChecked exposes inference errors; Score supplies runtime fallback.
 func (c *onnxClassifier) ScoreChecked(text string) (score float64, err error) {
 	defer func() {
 		if r := recover(); r != nil {

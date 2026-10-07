@@ -77,7 +77,7 @@
 | Кросс-файловый анализ (склейка инструкций, слабые сигналы) | `internal/scan/aggregate` |
 | Приманка на прерывание анализа (abort_bait): обезвреживание, продолжение скана | `internal/scan/detect/abort_bait.go` |
 | Нормализация омоглифов по полной таблице Unicode confusables | `internal/scan/normalize` |
-| Корпус и метрики (recall/precision как порог в тестах) | `testdata/corpus`, `TestCorpusMetrics` |
+| Корпуса, обучение и метрики | [saifety-org/lab](https://github.com/saifety-org/lab) |
 | Сканер секретов и ПДн + маскирование в выводе | `internal/scan/redact` |
 | Целостность MCP-инструментов: rug-pull, shadowing, cross-origin | `internal/mcp/integrity.go` |
 | Вывод SARIF для CI | `saifety scan -format sarif` |

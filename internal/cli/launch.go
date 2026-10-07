@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/alexandr-mironov/saifety/internal/launch"
-	"github.com/alexandr-mironov/saifety/internal/report"
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/launch"
+	"github.com/saifety-org/sAIfety/internal/report"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 func runLaunch(ctx context.Context, args []string, stdout, stderr io.Writer) int {

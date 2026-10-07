@@ -1,6 +1,6 @@
 package classify
 
-import "github.com/alexandr-mironov/saifety/internal/classifier"
+import "github.com/saifety-org/sAIfety/internal/classifier"
 
 // Trained is the default classifier: a small logistic-regression model
 // trained on generated attack/benign data and embedded in the binary. It

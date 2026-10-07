@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 // Summary aggregates verdicts of one run.

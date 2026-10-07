@@ -3,7 +3,7 @@
 // rule-based detectors. Everything is embedded; nothing is fetched at runtime.
 package rules
 
-import "github.com/alexandr-mironov/saifety/internal/scan"
+import "github.com/saifety-org/sAIfety/internal/scan"
 
 // Impact is the damage level per category, independent of detection confidence.
 var Impact = map[scan.Category]scan.Level{

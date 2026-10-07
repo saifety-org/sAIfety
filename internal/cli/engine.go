@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alexandr-mironov/saifety/internal/model"
-	"github.com/alexandr-mironov/saifety/internal/policy"
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/classify"
-	"github.com/alexandr-mironov/saifety/internal/scan/detect"
-	"github.com/alexandr-mironov/saifety/internal/scan/redact"
+	"github.com/saifety-org/sAIfety/internal/model"
+	"github.com/saifety-org/sAIfety/internal/policy"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/classify"
+	"github.com/saifety-org/sAIfety/internal/scan/detect"
+	"github.com/saifety-org/sAIfety/internal/scan/redact"
 )
 
 // newScanner wires the default detectors, the selected instruction

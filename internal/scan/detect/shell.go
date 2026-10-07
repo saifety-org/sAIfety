@@ -7,8 +7,8 @@ import (
 
 	"mvdan.cc/sh/v3/syntax"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Shell parses shell snippets with a real bash parser and reasons about the

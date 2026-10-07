@@ -1,9 +1,9 @@
 package detect
 
 import (
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/redact"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/redact"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Redaction surfaces secrets and personal data as findings. It does not

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alexandr-mironov/saifety/internal/policy"
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/detect"
+	"github.com/saifety-org/sAIfety/internal/policy"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/detect"
 )
 
 // TestMain lets the test binary double as a fake upstream MCP server when

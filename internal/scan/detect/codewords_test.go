@@ -3,7 +3,7 @@ package detect
 import (
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 // Common code identifiers must not trip command patterns (regression for a

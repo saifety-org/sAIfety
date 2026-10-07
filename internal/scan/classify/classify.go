@@ -1,14 +1,12 @@
-// Package classify defines the instruction classifier: a small model that
-// answers "is this text an instruction addressed to an AI agent?". The
-// production implementation will be an ONNX model run offline; this package
-// currently ships a no-op so the pipeline shape is fixed now.
+// Package classify adapts native, lexical and optional ONNX classifiers to
+// the document-scanning pipeline.
 package classify
 
 import (
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Classifier scores a chunk of text; 1.0 means "certainly an instruction".

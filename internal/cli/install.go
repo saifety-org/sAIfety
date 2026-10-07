@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/alexandr-mironov/saifety/internal/install"
+	"github.com/saifety-org/sAIfety/internal/install"
 )
 
 func runInstall(ctx context.Context, args []string, stdout, stderr io.Writer, uninstall bool) int {

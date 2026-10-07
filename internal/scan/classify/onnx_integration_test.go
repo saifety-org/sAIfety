@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/scan/classify"
+	"github.com/saifety-org/sAIfety/internal/scan/classify"
 )
 
 // This test runs real transformer inference. It is skipped unless the model

@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/alexandr-mironov/saifety/internal/model"
+	"github.com/saifety-org/sAIfety/internal/model"
 )
 
 func runModel(ctx context.Context, args []string, stdout, stderr io.Writer) int {

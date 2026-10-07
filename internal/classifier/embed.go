@@ -1,7 +1,9 @@
 package classifier
 
 import (
+	"crypto/sha256"
 	_ "embed"
+	"fmt"
 	"sync"
 )
 
@@ -15,7 +17,7 @@ var (
 )
 
 // Default returns the embedded, pre-trained attack-on-agent model. It is
-// trained offline (see ./gen) on generated malicious/benign samples and
+// trained offline in github.com/saifety-org/lab on malicious/benign samples and
 // shipped in the binary, so it needs no download and runs in microseconds.
 func Default() (*Model, error) {
 	defaultOnce.Do(func() {
@@ -23,3 +25,6 @@ func Default() (*Model, error) {
 	})
 	return defaultModel, defaultErr
 }
+
+// EmbeddedSHA256 identifies the exact embedded weight artifact.
+func EmbeddedSHA256() string { return fmt.Sprintf("%x", sha256.Sum256(embeddedWeights)) }

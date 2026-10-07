@@ -23,7 +23,7 @@ jobs:
         run: |
           mkdir -p dist
           VER="${GITHUB_REF_NAME}"
-          LDFLAGS="-s -w -X github.com/alexandr-mironov/saifety/internal/cli.Version=${VER}"
+          LDFLAGS="-s -w -X github.com/saifety-org/sAIfety/internal/cli.Version=${VER}"
           for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
             os="${target%/*}"; arch="${target#*/}"
             out="dist/saifety_${os}_${arch}"

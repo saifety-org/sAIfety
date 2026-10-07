@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/scan/decode"
-	"github.com/alexandr-mironov/saifety/internal/scan/normalize"
+	"github.com/saifety-org/sAIfety/internal/scan/decode"
+	"github.com/saifety-org/sAIfety/internal/scan/normalize"
 )
 
 // Options tune the scanner.

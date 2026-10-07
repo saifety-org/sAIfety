@@ -1,7 +1,7 @@
 # Builds:
 #   build        transformer build (-tags onnx, needs a C compiler); provisions
 #                the DeBERTa model on first runtime use.
-#   build-lite   pure-Go build (no cgo, no native runtime, lexical classifier).
+#   build-lite   pure-Go build (no cgo, no native runtime, embedded classifier).
 #
 # Install:
 #   install      go install into $(go env GOPATH)/bin (needs Go + that dir on PATH).
@@ -11,7 +11,7 @@
 
 PREFIX ?= /usr/local
 VERSION := $(shell date +%Y-%m-%d-%H%M%S)
-LDFLAGS := -X github.com/alexandr-mironov/saifety/internal/cli.Version=$(VERSION)
+LDFLAGS := -X github.com/saifety-org/sAIfety/internal/cli.Version=$(VERSION)
 
 .PHONY: build build-lite install install-lite install-bin install-bin-lite update reset-state test vet run-scan
 

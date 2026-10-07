@@ -14,7 +14,7 @@ import (
 //
 // It is intentionally a bag-of-features logistic score, not a transformer:
 // the ONNX slot (see Classifier) replaces it when a model is provided. The
-// weights below were hand-set from the labelled corpus in testdata/corpus
+// weights below were hand-set from the labelled corpus now in saifety-org/lab
 // and are regression-tested by the metrics harness, not learned at runtime.
 type Lexical struct{}
 

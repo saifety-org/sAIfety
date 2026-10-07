@@ -12,11 +12,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/policy"
-	"github.com/alexandr-mironov/saifety/internal/sanitize"
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/redact"
-	"github.com/alexandr-mironov/saifety/internal/stats"
+	"github.com/saifety-org/sAIfety/internal/policy"
+	"github.com/saifety-org/sAIfety/internal/sanitize"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/redact"
+	"github.com/saifety-org/sAIfety/internal/stats"
 )
 
 // Input is the common part of every hook payload.

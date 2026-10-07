@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alexandr-mironov/saifety/internal/hook"
-	"github.com/alexandr-mironov/saifety/internal/policy"
-	"github.com/alexandr-mironov/saifety/internal/stats"
+	"github.com/saifety-org/sAIfety/internal/hook"
+	"github.com/saifety-org/sAIfety/internal/policy"
+	"github.com/saifety-org/sAIfety/internal/stats"
 )
 
 func runHook(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) int {

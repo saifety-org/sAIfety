@@ -3,9 +3,9 @@ package detect
 import (
 	"regexp"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/normalize"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/normalize"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // Hidden finds text that a human would not see but a model would read:

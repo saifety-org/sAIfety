@@ -3,8 +3,8 @@ package detect
 import (
 	"regexp"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // AbortBait finds "refusal tripwire" content: passages planted to make a

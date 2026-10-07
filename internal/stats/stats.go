@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 // Data is the persisted counter set.

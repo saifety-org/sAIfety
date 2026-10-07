@@ -6,7 +6,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/alexandr-mironov/saifety/internal/cli"
+	"github.com/saifety-org/sAIfety/internal/cli"
 )
 
 func main() {

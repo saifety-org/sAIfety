@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 func TestRecordAndSnapshot(t *testing.T) {

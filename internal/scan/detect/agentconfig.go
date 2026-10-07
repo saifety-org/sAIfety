@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/rules"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/rules"
 )
 
 // AgentConfig inspects agent configuration files that can execute commands:

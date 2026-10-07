@@ -6,7 +6,7 @@ import (
 )
 
 // DefaultBundle is the prompt-injection classifier sAIfety provisions:
-// protectai/deberta-v3-base-prompt-injection-v2 (multilingual DeBERTa-v3,
+// protectai/deberta-v3-base-prompt-injection-v2 (English DeBERTa-v3,
 // labels SAFE=0 / INJECTION=1) plus the matching ONNX Runtime library.
 //
 // No checksums are pinned for the model and tokenizer yet: they are large

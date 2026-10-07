@@ -10,6 +10,7 @@ package classifier
 import (
 	"hash/fnv"
 	"math"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -48,21 +49,34 @@ func Features(text string) map[int]float64 {
 	}
 	// A few engineered signals as dedicated dimensions (stable indices near
 	// the top of the space) — cheap priors the n-grams may miss.
-	for k, v := range engineeredSignals(norm) {
+	signals := engineeredSignals(norm)
+	signalKeys := make([]int, 0, len(signals))
+	for k := range signals {
+		signalKeys = append(signalKeys, k)
+	}
+	sort.Ints(signalKeys)
+	for _, k := range signalKeys {
+		v := signals[k]
 		if v {
 			counts[Dim-1-k] += 3 // weight signal features a bit higher
 		}
 	}
 	// L2 normalize so length doesn't dominate.
 	var sum float64
-	for _, v := range counts {
+	keys := make([]int, 0, len(counts))
+	for k := range counts {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
+		v := counts[k]
 		sum += v * v
 	}
 	if sum == 0 {
 		return counts
 	}
 	inv := 1 / math.Sqrt(sum)
-	for k := range counts {
+	for _, k := range keys {
 		counts[k] *= inv
 	}
 	return counts

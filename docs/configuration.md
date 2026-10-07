@@ -57,13 +57,15 @@ sAIfety читает `saifety.json` из пользовательского ка
 синтетические шаблоны, публичные датасеты инъекций (Apache-2.0:
 deepset/prompt-injections, jackhhao/jailbreak-classification) и легитимные
 команды, собранные из README локальных репозиториев (секреты маскируются).
-Метрики считаются на отложенной части РЕАЛЬНЫХ данных (acc 0.95, precision 0.98,
-recall 0.91). Обновить данные: `scripts/fetch-classifier-data.sh`; переобучить:
-`go generate ./internal/classifier`. Источники — `internal/classifier/data/ATTRIBUTION.md`.
+Данные, обучение и оценка качества находятся в
+[saifety-org/lab](https://github.com/saifety-org/lab). Происхождение текущих весов:
+[MODEL.md](../internal/classifier/MODEL.md). Переобучение выполняется отдельно
+от сборки приложения и не заменяет встроенную модель автоматически.
 
 
-По умолчанию используется трансформер `protectai/deberta-v3-base-prompt-injection-v2`
-(многоязычная DeBERTa-v3, метки SAFE=0 / INJECTION=1).
+По умолчанию используется встроенная модель `trained`. Трансформер
+`protectai/deberta-v3-base-prompt-injection-v2` включается через `classifier: onnx`
+(английская DeBERTa-v3, метки SAFE=0 / INJECTION=1).
 
 - **Модель не хранится в git** (~738 МБ, превышает лимит GitHub в 100 МБ и осталась
   бы в истории навсегда). Она скачивается при первом запуске в кэш.

@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/policy"
-	"github.com/alexandr-mironov/saifety/internal/scan"
-	"github.com/alexandr-mironov/saifety/internal/scan/detect"
+	"github.com/saifety-org/sAIfety/internal/policy"
+	"github.com/saifety-org/sAIfety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan/detect"
 )
 
 func newScanner() *scan.Scanner {

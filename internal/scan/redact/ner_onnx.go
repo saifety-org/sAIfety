@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/alexandr-mironov/saifety/internal/onnxenv"
+	"github.com/saifety-org/sAIfety/internal/onnxenv"
 	"github.com/sugarme/tokenizer"
 	"github.com/sugarme/tokenizer/pretrained"
 	ort "github.com/yalue/onnxruntime_go"

@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 // Thresholds for the weak-signal check.

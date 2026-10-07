@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 func TestStripRemovesMediumSpans(t *testing.T) {

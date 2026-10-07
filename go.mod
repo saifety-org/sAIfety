@@ -1,4 +1,4 @@
-module github.com/alexandr-mironov/saifety
+module github.com/saifety-org/sAIfety
 
 go 1.26.0
 

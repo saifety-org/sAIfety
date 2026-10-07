@@ -3,7 +3,7 @@ package detect
 import (
 	"testing"
 
-	"github.com/alexandr-mironov/saifety/internal/scan"
+	"github.com/saifety-org/sAIfety/internal/scan"
 )
 
 func obf(src string) []scan.Finding {

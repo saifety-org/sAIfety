@@ -47,7 +47,8 @@ type RedactConfig struct {
 	NERLabels []string `json:"nerLabels"`
 }
 
-// DefaultConfigPath is $SAIFETY_CONFIG, else ~/.config/saifety/saifety.json.
+// DefaultConfigPath is $SAIFETY_CONFIG, else saifety/saifety.json under
+// os.UserConfigDir().
 // The config is deliberately NOT read from the project directory: a
 // poisoned repository must not be able to declare itself trusted.
 func DefaultConfigPath() string {

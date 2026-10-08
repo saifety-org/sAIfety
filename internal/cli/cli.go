@@ -6,6 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime/debug"
+
+	injectionmodel "github.com/saifety-org/prompt-injection-model"
 )
 
 // Exit codes. scan and launch return the maximum threat level found so the
@@ -61,6 +64,9 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 		return runStatistics(ctx, rest, stdout, stderr)
 	case "version":
 		fmt.Fprintln(stdout, "saifety", Version)
+		fmt.Fprintln(stdout, "prompt-injection-model", promptInjectionModelVersion())
+		fmt.Fprintln(stdout, "weights-sha256", injectionmodel.EmbeddedSHA256())
+		fmt.Fprintln(stdout, "feature-schema", injectionmodel.FeatureSchema)
 		return ExitClean
 	case "-h", "--help", "help":
 		fmt.Fprint(stdout, usage)
@@ -73,3 +79,23 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 
 // Version is set at build time via -ldflags "-X .../internal/cli.Version=...".
 var Version = "dev"
+
+// promptInjectionModelVersion reports the model revision actually linked into
+// this binary. Local workspaces are identified separately from release pins.
+func promptInjectionModelVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, dep := range info.Deps {
+			if dep.Path != "github.com/saifety-org/prompt-injection-model" {
+				continue
+			}
+			if dep.Replace != nil {
+				if dep.Replace.Version == "" {
+					return "local"
+				}
+				return dep.Replace.Version
+			}
+			return dep.Version
+		}
+	}
+	return "unknown"
+}

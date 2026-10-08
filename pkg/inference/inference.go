@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/saifety-org/sAIfety/internal/classifier"
+	classifier "github.com/saifety-org/prompt-injection-model"
 	"github.com/saifety-org/sAIfety/internal/model"
 	"github.com/saifety-org/sAIfety/internal/scan/classify"
 )

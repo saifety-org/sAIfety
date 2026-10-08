@@ -1,6 +1,6 @@
 package classify
 
-import "github.com/saifety-org/sAIfety/internal/classifier"
+import classifier "github.com/saifety-org/prompt-injection-model"
 
 // Trained is the default classifier: a small logistic-regression model
 // trained on generated attack/benign data and embedded in the binary. It

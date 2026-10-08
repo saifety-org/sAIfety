@@ -52,7 +52,7 @@ func (t *httpTransport) Call(ctx context.Context, method string, params any) (js
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Close()
+	defer func() { _ = resp.Close() }() // Best-effort cleanup.
 	if strings.HasPrefix(ctype, "application/json") {
 		var m Message
 		if err := json.NewDecoder(resp).Decode(&m); err != nil {
@@ -78,7 +78,7 @@ func (t *httpTransport) Notify(method string, params any) error {
 	if err != nil {
 		return err
 	}
-	resp.Close()
+	_ = resp.Close() // Cleanup after read or failure.
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (t *httpTransport) post(ctx context.Context, body []byte, wantResp bool) (i
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		resp.Body.Close()
+		_ = resp.Body.Close() // Cleanup after read or failure.
 		return nil, "", fmt.Errorf("http %d: %s", resp.StatusCode, strings.TrimSpace(string(b)))
 	}
 	return resp.Body, resp.Header.Get("Content-Type"), nil
@@ -161,7 +161,7 @@ func (t *httpTransport) Close() error {
 	}
 	req.Header.Set("Mcp-Session-Id", sid)
 	if resp, err := t.client.Do(req); err == nil {
-		resp.Body.Close()
+		_ = resp.Body.Close() // Cleanup after read or failure.
 	}
 	return nil
 }
@@ -188,8 +188,8 @@ func sseEvents(r io.Reader) <-chan string {
 				flush()
 			case strings.HasPrefix(line, "data:"):
 				data = append(data, strings.TrimPrefix(strings.TrimPrefix(line, "data:"), " "))
-			case strings.HasPrefix(line, ":"):
-				// comment/keep-alive, ignore
+			default:
+				// Ignore comments/keep-alives and unhandled fields.
 			}
 		}
 		flush()

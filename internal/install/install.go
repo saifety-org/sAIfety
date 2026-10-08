@@ -89,13 +89,6 @@ type Plan struct {
 	Installed  bool // already pointing at saifety
 }
 
-// SaifetyConfig is the subset of saifety.json this package reads and writes.
-// Unknown fields are preserved on write.
-type SaifetyConfig struct {
-	raw     map[string]json.RawMessage
-	servers map[string]json.RawMessage
-}
-
 // Options controls a takeover.
 type Options struct {
 	Self          string // absolute path to the saifety binary

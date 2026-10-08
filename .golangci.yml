@@ -1,0 +1,23 @@
+version: "2"
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+linters:
+  default: standard
+  exclusions:
+    presets: []
+    paths: []
+    rules:
+      # Human-readable diagnostics/progress retain best-effort output semantics.
+      # JSON/SARIF output and data writes are still checked.
+      - path: "^internal/(cli|install|model|report)/"
+        linters: [errcheck]
+        text: 'Error return value of `fmt\.F(print|printf|println)` is not checked'
+      # The !onnx constructors deliberately always return an error. These
+      # callers also compile with onnx, where success is possible.
+      - path: '^(internal/cli/engine|pkg/inference/inference)\.go$'
+        linters: [staticcheck]
+        text: 'SA4023'
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -43,11 +43,11 @@ func TestHTTPTransport(t *testing.T) {
 			// respond via SSE to exercise that path
 			w.Header().Set("Content-Type", "text/event-stream")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "event: message\ndata: %s\n\n", replyFor(body, map[string]any{"tools": []map[string]string{{"name": "ping"}}}))
+			_, _ = fmt.Fprintf(w, "event: message\ndata: %s\n\n", replyFor(body, map[string]any{"tools": []map[string]string{{"name": "ping"}}})) // Test server output; client assertions detect failures.
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(replyFor(body, map[string]any{"ok": true}))
+		_, _ = w.Write(replyFor(body, map[string]any{"ok": true})) // Test server output; client assertions detect failures.
 	}))
 	defer srv.Close()
 
@@ -55,7 +55,7 @@ func TestHTTPTransport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tr.Close()
+	defer func() { _ = tr.Close() }() // Best-effort cleanup.
 	if _, err := tr.Call(context.Background(), "initialize", map[string]any{}); err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestSSETransport(t *testing.T) {
 		fl, _ := w.(http.Flusher)
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "event: endpoint\ndata: %s\n\n", postPath)
+		_, _ = fmt.Fprintf(w, "event: endpoint\ndata: %s\n\n", postPath) // Test server output; client assertions detect failures.
 		fl.Flush()
 		<-r.Context().Done() // keep stream open
 	})
@@ -106,12 +106,12 @@ func TestSSETransport(t *testing.T) {
 		fl := w.(http.Flusher)
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "event: endpoint\ndata: %s\n\n", postPath)
+		_, _ = fmt.Fprintf(w, "event: endpoint\ndata: %s\n\n", postPath) // Test server output; client assertions detect failures.
 		fl.Flush()
 		for {
 			select {
 			case ev := <-events:
-				fmt.Fprintf(w, "event: message\ndata: %s\n\n", ev)
+				_, _ = fmt.Fprintf(w, "event: message\ndata: %s\n\n", ev) // Test server output; client assertions detect failures.
 				fl.Flush()
 			case <-r.Context().Done():
 				return
@@ -124,7 +124,7 @@ func TestSSETransport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tr.Close()
+	defer func() { _ = tr.Close() }() // Best-effort cleanup.
 	res, err := tr.Call(context.Background(), "tools/list", map[string]any{})
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func TestWSTransport(t *testing.T) {
 		if err != nil {
 			return
 		}
-		defer c.Close(websocket.StatusNormalClosure, "")
+		defer func() { _ = c.Close(websocket.StatusNormalClosure, "") }() // Best-effort cleanup.
 		for {
 			_, data, err := c.Read(context.Background())
 			if err != nil {
@@ -153,7 +153,9 @@ func TestWSTransport(t *testing.T) {
 			if req.Method == "" || len(req.ID) == 0 {
 				continue
 			}
-			c.Write(context.Background(), websocket.MessageText, replyFor(data, map[string]any{"echo": req.Method}))
+			if err := c.Write(context.Background(), websocket.MessageText, replyFor(data, map[string]any{"echo": req.Method})); err != nil {
+				return
+			}
 		}
 	}))
 	defer srv.Close()
@@ -163,7 +165,7 @@ func TestWSTransport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tr.Close()
+	defer func() { _ = tr.Close() }() // Best-effort cleanup.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := tr.Call(ctx, "tools/call", map[string]any{"name": "x"})

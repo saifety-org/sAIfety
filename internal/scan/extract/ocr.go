@@ -49,7 +49,7 @@ func (t Tesseract) Recognize(ctx context.Context, name string, data []byte) (str
 	if err != nil {
 		return "", err
 	}
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }() // Best-effort cleanup.
 	if _, err := tmp.Write(data); err != nil {
 		return "", err
 	}

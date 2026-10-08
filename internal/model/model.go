@@ -109,7 +109,7 @@ func fetch(w io.Writer, a Artifact, force bool) error {
 		return err
 	}
 	if ok, err := verify(tmp, a); !ok {
-		os.Remove(tmp)
+		_ = os.Remove(tmp) // Cleanup after read or failure.
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ func download(w io.Writer, url, dst, name string, size int64) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // Best-effort cleanup.
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("http %d", resp.StatusCode)
 	}
@@ -132,7 +132,7 @@ func download(w io.Writer, url, dst, name string, size int64) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }() // Best-effort cleanup.
 	total := resp.ContentLength
 	if total <= 0 {
 		total = size // fall back to the manifest size
@@ -140,7 +140,10 @@ func download(w io.Writer, url, dst, name string, size int64) error {
 	pw := newProgress(w, name, total)
 	_, err = io.Copy(io.MultiWriter(f, pw), resp.Body)
 	pw.done()
-	return err
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }
 
 func verify(path string, a Artifact) (bool, error) {
@@ -155,7 +158,7 @@ func verify(path string, a Artifact) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }() // Best-effort cleanup.
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return false, err

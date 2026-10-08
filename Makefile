@@ -1,3 +1,22 @@
+# CI and local checks must use pinned modules, never a developer's go.work.
+export GOWORK := off
+export GOFLAGS := -mod=readonly
+GOLANGCI_LINT_VERSION := v2.14.0
+GOLANGCI_LINT ?= $(CURDIR)/bin/golangci-lint
+
+.PHONY: fmt-check lint lint-install ci-test ci-build
+
+fmt-check:
+	bash scripts/check-format.sh
+
+lint-install:
+	GOBIN=$(CURDIR)/bin go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+
+lint: fmt-check vet
+	@$(GOLANGCI_LINT) version | grep -F 'version $(GOLANGCI_LINT_VERSION:v%=%) ' >/dev/null || { echo 'Run make lint-install (requires $(GOLANGCI_LINT_VERSION))'; exit 1; }
+	$(GOLANGCI_LINT) run --config .golangci.yml ./...
+	$(GOLANGCI_LINT) run --config .golangci.yml --build-tags onnx ./...
+
 # Builds:
 #   build        ONNX-enabled build (-tags onnx, needs a C compiler).
 #                Uses the embedded classifier unless configured otherwise.
@@ -76,3 +95,14 @@ update: build _copybin
 # false positives from older binaries). The new binary re-derives them.
 reset-state:
 	@state="$${XDG_STATE_HOME:-$$HOME/.local/state}/saifety"; 	for f in blocklist.json toolpins.json; do 		if [ -f "$$state/$$f" ]; then cp "$$state/$$f" "$$state/$$f.bak" && rm -f "$$state/$$f" && echo "сброшен $$state/$$f (бэкап .bak)"; fi; 	done; 	echo "готово; изменения применятся после перезапуска Claude"
+
+ci-test:
+	go test -race -count=1 -timeout=5m ./...
+	go test -count=1 -timeout=5m -tags onnx ./...
+
+ci-build:
+	$(MAKE) build
+	./bin/saifety version
+	CGO_ENABLED=0 $(MAKE) build-lite
+	./bin/saifety version
+	bash scripts/build-release.sh

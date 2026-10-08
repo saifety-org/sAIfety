@@ -72,7 +72,7 @@ func runLaunch(ctx context.Context, args []string, stdout, stderr io.Writer) int
 		fmt.Fprintln(stdout, "command: ", launch.Command(plan, files).String())
 		return ExitClean
 	}
-	defer os.RemoveAll(files.TempDir)
+	defer func() { _ = os.RemoveAll(files.TempDir) }() // Best-effort cleanup.
 
 	// 3. Run claude.
 	cmd := launch.Command(plan, files)

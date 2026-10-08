@@ -74,12 +74,3 @@ func LoadConfig(path string) (Config, error) {
 	}
 	return c, json.Unmarshal(b, &c)
 }
-
-func (c Config) trusted(name string) bool {
-	for _, t := range c.TrustedSources {
-		if t == name {
-			return true
-		}
-	}
-	return false
-}

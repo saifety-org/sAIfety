@@ -123,17 +123,17 @@ func (c *onnxClassifier) ScoreChecked(text string) (score float64, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
-	defer idT.Destroy()
+	defer func() { _ = idT.Destroy() }() // Best-effort tensor cleanup.
 	mT, err := ort.NewTensor(shape, mask)
 	if err != nil {
 		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
-	defer mT.Destroy()
+	defer func() { _ = mT.Destroy() }() // Best-effort tensor cleanup.
 	outT, err := ort.NewEmptyTensor[float32](ort.NewShape(1, 2))
 	if err != nil {
 		return 0, fmt.Errorf("onnx inference failed: %v", err)
 	}
-	defer outT.Destroy()
+	defer func() { _ = outT.Destroy() }() // Best-effort tensor cleanup.
 
 	c.mu.Lock()
 	err = c.session.Run([]ort.Value{idT, mT}, []ort.Value{outT})
@@ -165,7 +165,7 @@ func (c *onnxClassifier) Scores(texts []string) []float64 {
 // tensor, runs the model once, and fills out with P(injection). A tokenizer
 // or runtime panic leaves the affected scores at 0.
 func (c *onnxClassifier) scoreBatch(texts []string, out []float64) {
-	defer func() { recover() }()
+	defer func() { _ = recover() }()
 	encs := make([][]int64, len(texts))
 	maxLen := 1
 	for i, t := range texts {
@@ -200,17 +200,17 @@ func (c *onnxClassifier) scoreBatch(texts []string, out []float64) {
 	if err != nil {
 		return
 	}
-	defer idT.Destroy()
+	defer func() { _ = idT.Destroy() }() // Best-effort tensor cleanup.
 	mT, err := ort.NewTensor(shape, mask)
 	if err != nil {
 		return
 	}
-	defer mT.Destroy()
+	defer func() { _ = mT.Destroy() }() // Best-effort tensor cleanup.
 	outT, err := ort.NewEmptyTensor[float32](ort.NewShape(int64(b), 2))
 	if err != nil {
 		return
 	}
-	defer outT.Destroy()
+	defer func() { _ = outT.Destroy() }() // Best-effort tensor cleanup.
 	c.mu.Lock()
 	err = c.session.Run([]ort.Value{idT, mT}, []ort.Value{outT})
 	c.mu.Unlock()

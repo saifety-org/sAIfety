@@ -59,7 +59,7 @@ func startSSE(ctx context.Context, name string, spec ServerSpec) (transport, err
 		return nil, fmt.Errorf("%s: sse connect: %w", name, err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
+		_ = resp.Body.Close() // Cleanup after read or failure.
 		return nil, fmt.Errorf("%s: sse http %d", name, resp.StatusCode)
 	}
 	t.body = resp.Body
@@ -68,7 +68,7 @@ func startSSE(ctx context.Context, name string, spec ServerSpec) (transport, err
 	select {
 	case <-t.postReady:
 	case <-time.After(10 * time.Second):
-		resp.Body.Close()
+		_ = resp.Body.Close() // Cleanup after read or failure.
 		return nil, fmt.Errorf("%s: no endpoint event from sse server", name)
 	}
 	return t, nil
@@ -152,8 +152,8 @@ func (t *sseTransport) postMessage(ctx context.Context, body []byte) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-	io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<16))
+	defer func() { _ = resp.Body.Close() }()                     // Best-effort cleanup.
+	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<16)) // Best-effort response drain.
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("sse post http %d", resp.StatusCode)
 	}

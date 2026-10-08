@@ -11,3 +11,6 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; d
   if [[ "$os" == windows ]]; then out="${out}.exe"; fi
   GOOS="$os" GOARCH="$arch" go build -ldflags "$ldflags" -o "$out" ./cmd/saifety
 done
+
+# Intentional compiler failure for CI gate acceptance check.
+GOOS=linux GOARCH=amd64 go build ./ci-missing-build-target

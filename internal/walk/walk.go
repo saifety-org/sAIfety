@@ -115,7 +115,7 @@ func isBinary(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }() // Best-effort cleanup.
 	buf := make([]byte, 8192)
 	n, _ := f.Read(buf)
 	return bytes.IndexByte(buf[:n], 0) >= 0, nil

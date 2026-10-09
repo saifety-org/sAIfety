@@ -112,7 +112,7 @@ func startProxy(t *testing.T) (*client, *memBlocklist) {
 	outR, outW := io.Pipe()
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() { _ = p.Serve(ctx, inR, outW) }()
-	t.Cleanup(func() { cancel(); inW.Close() })
+	t.Cleanup(func() { cancel(); _ = inW.Close() })
 	c := &client{w: inW, r: bufio.NewReader(outR)}
 	c.call(t, "initialize", map[string]any{"protocolVersion": "2025-06-18", "clientInfo": map[string]string{"name": "test"}})
 	return c, bl
@@ -206,7 +206,7 @@ func TestUpstreamSurvivesHandshakeTimeout(t *testing.T) {
 	outR, outW := io.Pipe()
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() { _ = p.Serve(ctx, inR, outW) }()
-	t.Cleanup(func() { cancel(); inW.Close() })
+	t.Cleanup(func() { cancel(); _ = inW.Close() })
 	c := &client{w: inW, r: bufio.NewReader(outR)}
 	c.call(t, "initialize", map[string]any{"protocolVersion": "2025-06-18", "clientInfo": map[string]string{"name": "test"}})
 

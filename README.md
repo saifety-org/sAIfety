@@ -151,3 +151,33 @@ make vet
 - Go API: [pkg/scanner](pkg/scanner) и [pkg/inference](pkg/inference).
 - [saifety-org/lab](https://github.com/saifety-org/lab) — данные и обучение,
   корпуса примеров, сравнение моделей, генераторы рабочих таблиц и история проекта.
+
+## CI checks
+
+Pull requests and pushes to `main` run three required checks: `lint`, `test`,
+`build`. Reproduce them from this repository with Go from `go.mod` and a C
+compiler for the ONNX build where applicable:
+
+```sh
+make lint-install          # golangci-lint v2.14.0; installs only into ./bin
+make lint                 # gofmt (read-only), go vet, configured Go linters
+make ci-test              # unit/regression tests with race detector
+make ci-build             # all supported build variants
+```
+
+`GOWORK=off` and `-mod=readonly` prevent local workspace overrides or implicit
+module edits. Actions are pinned by commit; the linter version is pinned in
+both CI and Makefile. Checks have timeouts and newer runs cancel stale runs
+on the same PR. CI does not download inference models, train candidates or
+run full benchmarks. ONNX integration tests requiring cached assets skip
+when those assets are absent; tagged code still compiles and is linted.
+
+The linter uses the standard checks (`errcheck`, `govet`, `ineffassign`,
+`staticcheck`, `unused`) without automatic fixes. Any exclusions are narrow
+rules with reasons in `.golangci.yml`. Cleanup failures already superseded by
+an operation error, read-side closes and test teardown are explicitly ignored
+at the call site; file writes and the final write-side close remain checked.
+
+The application build checks native ONNX, pure-Go lite, and all five release
+targets: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64 and windows/amd64.
+A `v*` tag reuses the same CI workflow before publishing any release assets.

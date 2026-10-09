@@ -189,7 +189,7 @@ func inflate(b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }() // Best-effort cleanup.
 	return io.ReadAll(io.LimitReader(r, MaxText))
 }
 

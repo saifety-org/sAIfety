@@ -182,7 +182,7 @@ func (n *onnxNER) Recognize(text string) (out []Match) {
 		tv, err := ort.NewTensor(shape, data)
 		if err != nil {
 			for _, c := range cleanup {
-				c.Destroy()
+				_ = c.Destroy() // Best-effort tensor cleanup.
 			}
 			return nil
 		}
@@ -192,17 +192,17 @@ func (n *onnxNER) Recognize(text string) (out []Match) {
 	outT, err := ort.NewEmptyTensor[float32](ort.NewShape(1, int64(seq), int64(n.numLbl)))
 	if err != nil {
 		for _, c := range cleanup {
-			c.Destroy()
+			_ = c.Destroy() // Best-effort tensor cleanup.
 		}
 		return nil
 	}
-	defer outT.Destroy()
+	defer func() { _ = outT.Destroy() }() // Best-effort tensor cleanup.
 
 	n.mu.Lock()
 	err = n.session.Run(inputs, []ort.Value{outT})
 	n.mu.Unlock()
 	for _, c := range cleanup {
-		c.Destroy()
+		_ = c.Destroy() // Best-effort tensor cleanup.
 	}
 	if err != nil {
 		return nil

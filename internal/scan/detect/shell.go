@@ -719,7 +719,6 @@ func substHasDownload(c *call) bool {
 var (
 	reURL        = regexp.MustCompile(`https?://[^\s"'` + "`" + `|)>]+`)
 	reIPHost     = regexp.MustCompile(`^https?://(\d{1,3}\.){3}\d{1,3}(?::\d+)?`)
-	reVerify     = regexp.MustCompile(`(?i)(sha(1|224|256|384|512)(sum)?|shasum|hash_file|md5sum|gpg\s+--?(verify|recv)|minisign|cosign|--proto\s*'?=https)`)
 	reDecodePipe = regexp.MustCompile(`(?i)(base64\s+-d|base64\s+--decode|xxd\s+-r|openssl\s+enc\s+-d)[^\n]*\|\s*(sudo\s+)?(ba|z|da)?sh`)
 )
 

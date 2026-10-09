@@ -19,7 +19,7 @@ func fetchTgz(w io.Writer, a Artifact, dst, tmp string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }() // Best-effort cleanup.
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("http %d", resp.StatusCode)
 	}
@@ -27,7 +27,7 @@ func fetchTgz(w io.Writer, a Artifact, dst, tmp string) error {
 	if err != nil {
 		return err
 	}
-	defer gz.Close()
+	defer func() { _ = gz.Close() }() // Best-effort cleanup.
 	tr := tar.NewReader(gz)
 	for {
 		hdr, err := tr.Next()
@@ -45,11 +45,14 @@ func fetchTgz(w io.Writer, a Artifact, dst, tmp string) error {
 			return err
 		}
 		if _, err := io.Copy(f, tr); err != nil {
-			f.Close()
-			os.Remove(tmp)
+			_ = f.Close()      // Cleanup after read or failure.
+			_ = os.Remove(tmp) // Cleanup after read or failure.
 			return err
 		}
-		f.Close()
+		if err := f.Close(); err != nil {
+			_ = os.Remove(tmp) // Cleanup after failed write.
+			return err
+		}
 		return os.Rename(tmp, dst)
 	}
 }

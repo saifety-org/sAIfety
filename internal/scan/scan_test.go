@@ -90,7 +90,7 @@ func TestNestedEncodingDepth(t *testing.T) {
 }
 
 func TestHiddenChars(t *testing.T) {
-	raw := "plain​​​text‮ here"
+	raw := "plain\u200b\u200b\u200btext\u202e here"
 	v := scanText(t, scan.KindFile, raw)
 	if !has(v, scan.CatHiddenText) {
 		t.Fatalf("hidden text not flagged: %+v", v)

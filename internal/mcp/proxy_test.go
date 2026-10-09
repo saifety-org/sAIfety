@@ -55,9 +55,14 @@ func fakeUpstream() {
 			}
 			_ = json.Unmarshal(m.Params, &p)
 			var args struct {
-				Text string `json:"text"`
+				Text   string          `json:"text"`
+				Result json.RawMessage `json:"result"`
 			}
 			_ = json.Unmarshal(p.Arguments, &args)
+			if len(args.Result) > 0 {
+				_ = c.Write(Reply(m, args.Result))
+				continue
+			}
 			_ = c.Write(Reply(m, map[string]any{"content": []map[string]string{{"type": "text", "text": args.Text}}}))
 		default:
 			_ = c.Write(Fail(m, CodeMethodNotFound, m.Method))

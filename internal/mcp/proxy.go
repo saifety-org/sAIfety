@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"sort"
@@ -77,7 +76,7 @@ type Tool struct {
 type Content struct {
 	Type string `json:"type"`
 	Text string `json:"text,omitempty"`
-	// Other fields (image data, resources) pass through untouched.
+	// Binary image/audio/blob data is opaque; textual fields are scanned.
 	Rest map[string]json.RawMessage `json:"-"`
 }
 
@@ -408,50 +407,7 @@ func (p *Proxy) toolsCall(ctx context.Context, req *Message) *Message {
 		return Fail(req, CodeInternal, err.Error())
 	}
 
-	var result struct {
-		Content           []json.RawMessage `json:"content"`
-		StructuredContent json.RawMessage   `json:"structuredContent,omitempty"`
-		IsError           bool              `json:"isError,omitempty"`
-	}
-	if err := json.Unmarshal(res, &result); err != nil {
-		return Reply(req, json.RawMessage(res))
-	}
-
-	worst := scan.LevelNone
-	for i, raw := range result.Content {
-		var c struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		}
-		if json.Unmarshal(raw, &c) != nil || c.Type != "text" {
-			continue
-		}
-		v := p.Scanner.Scan(ctx, &scan.Document{Source: source, Kind: scan.KindToolResult, Raw: c.Text, Trusted: p.Trusted[server]})
-		p.Stats.Record(v)
-		if v.Level > worst {
-			worst = v.Level
-		}
-		if v.Action == scan.ActionBlock {
-			p.block(source, fmt.Sprintf("%s in tool result", v.Level))
-			return Reply(req, blockedResult(source))
-		}
-		text := c.Text
-		if v.Action != scan.ActionPass {
-			text = sanitize.Apply(text, v)
-		}
-		if p.RedactOn {
-			text = redact.Mask(text, redact.Find(text, p.Redact))
-		}
-		if text != c.Text {
-			result.Content[i] = mustJSON(map[string]string{"type": "text", "text": text})
-		}
-	}
-	if result.StructuredContent != nil && worst >= scan.LevelMedium {
-		// Structured output cannot be sanitized field by field yet; drop
-		// it so the model only sees the cleaned text form.
-		result.StructuredContent = nil
-	}
-	return Reply(req, result)
+	return Reply(req, p.scanToolResult(ctx, source, p.Trusted[server], res))
 }
 
 func blockedResult(source string) map[string]any {

@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := build
+
 # CI and local checks must use pinned modules, never a developer's go.work.
 export GOWORK := off
 export GOFLAGS := -mod=readonly

@@ -74,6 +74,7 @@ type memBlocklist struct{ m map[string]string }
 
 func (b *memBlocklist) Blocked(s string) bool        { _, ok := b.m[s]; return ok }
 func (b *memBlocklist) Block(s, reason string) error { b.m[s] = reason; return nil }
+func (b *memBlocklist) Check(s string) (bool, error) { return b.Blocked(s), nil }
 
 type client struct {
 	w  io.Writer

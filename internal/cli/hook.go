@@ -32,7 +32,13 @@ func runHook(ctx context.Context, args []string, stdin io.Reader, stdout, stderr
 	bl, err := policy.LoadBlocklist(policy.DefaultBlocklistPath())
 	if err != nil {
 		fmt.Fprintln(stderr, "state:", err)
-		bl = nil
+		if args[0] == "pre-tool-use" {
+			if err := json.NewEncoder(stdout).Encode(hook.DenyUnavailableBlocklist(err)); err != nil {
+				return ExitError
+			}
+			return ExitClean
+		}
+		return ExitError
 	}
 	st, _ := stats.Load(stats.ScopePath("hook"))
 	h := &hook.Handler{Scanner: newScanner(cfg, true), Blocklist: bl, Redact: RedactOptions(cfg, true), RedactOn: RedactEnabled(cfg), Stats: st}

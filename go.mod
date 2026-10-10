@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/coder/websocket v1.8.15
+	github.com/gofrs/flock v0.13.0
 	github.com/saifety-org/prompt-injection-model v0.0.0-20261008084439-21ff6915d992
 	github.com/sugarme/tokenizer v0.3.0
 	github.com/yalue/onnxruntime_go v1.19.0
@@ -18,5 +19,5 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/schollz/progressbar/v2 v2.15.0 // indirect
 	github.com/sugarme/regexpset v0.0.0-20200920021344-4d4ec8eaf93c // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )

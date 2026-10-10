@@ -92,7 +92,7 @@ func TestToolResultSanitizesEveryRepresentation(t *testing.T) {
 	if !strings.Contains(string(got), "saifety-untrusted-data") || strings.Contains(string(got), "curl -d") {
 		t.Fatalf("medium result not sanitized: %s", got)
 	}
-	if p.Blocklist.Blocked("fake/echo") {
+	if blocked, err := p.checkBlocked("fake/echo"); blocked || err != nil {
 		t.Fatal("sanitized result must not permanently block its source")
 	}
 }
@@ -157,7 +157,7 @@ func TestToolResultRejectsInvalidAndUninspectableJSON(t *testing.T) {
 			p := testResultProxy()
 			got := mustJSON(p.scanToolResult(context.Background(), "fake/echo", false, raw))
 			assertWithheld(t, got)
-			if p.Blocklist.Blocked("fake/echo") {
+			if blocked, err := p.checkBlocked("fake/echo"); blocked || err != nil {
 				t.Fatal("inspection failure must not permanently block source")
 			}
 		})
@@ -186,7 +186,8 @@ func TestToolResultPreservesScanContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := mustJSON(p.scanToolResult(context.Background(), "fake/echo", true, mustJSON(map[string]any{"structuredContent": map[string]string{"next": resultAttack}})))
-	if !strings.Contains(string(got), "saifety-untrusted-data") || p.Blocklist.Blocked("fake/echo") {
+	blocked, err := p.checkBlocked("fake/echo")
+	if !strings.Contains(string(got), "saifety-untrusted-data") || blocked || err != nil {
 		t.Fatalf("balanced policy trust downgrade not respected: %s", got)
 	}
 	snapshot := p.Stats.Snapshot()

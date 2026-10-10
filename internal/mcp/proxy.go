@@ -27,7 +27,7 @@ const Separator = "__"
 // hook adapter through internal/policy state. Kept as an interface so the
 // proxy does not depend on the storage.
 type Blocklist interface {
-	Blocked(source string) bool
+	Check(source string) (bool, error)
 	Block(source, reason string) error
 }
 
@@ -178,7 +178,12 @@ func (p *Proxy) startUpstreams(ctx context.Context, protocol string, clientInfo 
 
 	var wg sync.WaitGroup
 	for name := range p.Specs {
-		if p.Blocklist != nil && p.Blocklist.Blocked(name) {
+		blocked, err := p.checkBlocked(name)
+		if err != nil {
+			p.logf("blocklist: %v", err)
+			continue
+		}
+		if blocked {
 			p.logf("upstream %s is blocked, not starting", name)
 			continue
 		}
@@ -299,7 +304,12 @@ func (p *Proxy) toolsList(ctx context.Context, req *Message) *Message {
 	for _, g := range gathered {
 		name, t := g.server, g.tool
 		source := name + "/" + t.Name
-		if p.Blocklist != nil && p.Blocklist.Blocked(source) {
+		blocked, err := p.checkBlocked(name, source)
+		if err != nil {
+			p.logf("blocklist: %v", err)
+			return Fail(req, CodeInternal, "blocklist state unavailable")
+		}
+		if blocked {
 			continue
 		}
 		// Tool descriptions and schemas are a known injection vector
@@ -383,7 +393,12 @@ func (p *Proxy) toolsCall(ctx context.Context, req *Message) *Message {
 		return Fail(req, CodeInvalidParams, "tool name must be <server>__<tool>")
 	}
 	source := server + "/" + tool
-	if p.Blocklist != nil && (p.Blocklist.Blocked(server) || p.Blocklist.Blocked(source)) {
+	blocked, err := p.checkBlocked(server, source)
+	if err != nil {
+		p.logf("blocklist: %v", err)
+		return Reply(req, withheldResult("blocklist state unavailable"))
+	}
+	if blocked {
 		return Reply(req, blockedResult(source))
 	}
 	p.mu.Lock()
@@ -426,6 +441,19 @@ func (p *Proxy) block(source, reason string) {
 			p.logf("blocklist: %v", err)
 		}
 	}
+}
+
+func (p *Proxy) checkBlocked(sources ...string) (bool, error) {
+	if p.Blocklist == nil {
+		return false, nil
+	}
+	for _, source := range sources {
+		blocked, err := p.Blocklist.Check(source)
+		if err != nil || blocked {
+			return blocked, err
+		}
+	}
+	return false, nil
 }
 
 func (p *Proxy) snapshot() map[string]*Upstream {

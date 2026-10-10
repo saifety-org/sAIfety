@@ -41,6 +41,20 @@ jobs:
         with:
           go-version-file: go.mod
       - run: make ci-test
+  state-portability:
+    name: state (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+      - run: go test -count=1 -timeout=3m ./internal/policy ./internal/hook ./internal/mcp ./internal/cli
   build:
     name: build
     runs-on: ubuntu-latest

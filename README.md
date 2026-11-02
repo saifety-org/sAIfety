@@ -158,6 +158,57 @@ sAIfety анализирует переданное ему содержимое 
 маскирование также не гарантирует обнаружение всех секретов и ПДн.
 Разовый `scan` не фильтрует дальнейшую сессию агента.
 
+## Статус и планы
+
+Состояние на ноябрь 2026 года. Таблица отражает смёрженное в `main`, открытые
+PR и ветки, а также известные планы; это не обещание сроков.
+
+| Возможность / задача | Статус | Комментарий / ссылка |
+|---|---|---|
+| **MCP-прокси** | | |
+| Объединение серверов, `tools/list` и `tools/call` (stdio, HTTP, SSE, WebSocket) | ✅ | Базовая функциональность |
+| Проверка structured-результатов и embedded resources | ✅ | [#7](https://github.com/saifety-org/sAIfety/pull/7) |
+| Детекция rug-pull, коллизий и подмены инструментов | ✅ | [Целостность MCP-инструментов](docs/configuration.md#целостность-mcp-инструментов) |
+| Синхронизация blocklist между горутинами и процессами | ✅ | [#8](https://github.com/saifety-org/sAIfety/pull/8) |
+| Нейтральные отказы и приватный журнал решений (`-decision-log`) | ✅ | [#10](https://github.com/saifety-org/sAIfety/pull/10) |
+| Кэш вердиктов описаний с учётом флага `trusted` | 🚧 | [#30](https://github.com/saifety-org/sAIfety/pull/30), задача [#26](https://github.com/saifety-org/sAIfety/issues/26) |
+| Агрегация `resources/*` и `prompts/*` | ⬜ | Отмечено как «later step» в `internal/mcp/proxy.go` |
+| Безопасная область карантина MCP-результатов | ⬜ | [#13](https://github.com/saifety-org/sAIfety/issues/13) |
+| Доверенный контекст задачи и разрешений в MCP и хуках | ⬜ | [#14](https://github.com/saifety-org/sAIfety/issues/14) |
+| **Детекция инъекций** | | |
+| Встроенный классификатор `trained` из модуля [prompt-injection-model](https://github.com/saifety-org/prompt-injection-model) | ✅ | [#1](https://github.com/saifety-org/sAIfety/pull/1), [#3](https://github.com/saifety-org/sAIfety/pull/3) |
+| Режимы `lexical`, `onnx` (DeBERTa), `auto` | ✅ | [Настройки и модели](#настройки-и-модели) |
+| Экспериментальный контекстный E5 (`saifety context`, advisory в MCP/хуках) | ✅ | Opt-in, [#9](https://github.com/saifety-org/sAIfety/pull/9), [описание](docs/contextual-inference.md) |
+| Вырезание по нормализованным координатам спанов | 🚧 | [#29](https://github.com/saifety-org/sAIfety/pull/29), задача [#24](https://github.com/saifety-org/sAIfety/issues/24) |
+| Подключение контекстного кандидата к политике MCP-защиты | ⬜ | [#15](https://github.com/saifety-org/sAIfety/issues/15) |
+| Проверка в реальном клиенте и решение о включении модели | ⬜ | [#16](https://github.com/saifety-org/sAIfety/issues/16) |
+| **Маскирование секретов и ПДн** | | |
+| Маскирование секретов (ключи, токены, JWT, пароли в URL) | ✅ | [Обезличивание](docs/configuration.md#обезличивание-redact) |
+| Маскирование ПДн в ответах MCP-прокси | ✅ | [#18](https://github.com/saifety-org/sAIfety/pull/18) |
+| Русские ФИО и мобильные РФ без NER | ✅ | [#20](https://github.com/saifety-org/sAIfety/pull/20), [оценка](docs/russian-pii-evaluation.md) |
+| Опциональный NER (`"redact": {"ner": true}`) | ✅ | [#22](https://github.com/saifety-org/sAIfety/pull/22), [оценка](docs/optional-ner-evaluation.md) |
+| Явные поля человека независимо от алфавита | 🚧 | [#23](https://github.com/saifety-org/sAIfety/pull/23), открыт |
+| Маскирование e-mail в ответах MCP | 🚧 | Ветка `claude/determined-turing-cgn54s`, PR ещё не открыт |
+| Опциональные детекторы СНИЛС, ИНН, паспорта, номеров карт (с контрольными суммами, за флагом) | ⬜ | Сейчас вне профиля ПДн |
+| Городские и стационарные телефоны РФ (опционально, после анализа ложных срабатываний) | ⬜ | Сейчас вне профиля ПДн |
+| Регресс-тесты fail-closed для всех сбоев инспекции ПДн | ⬜ | |
+| Латинское имя в роли JSON-ключа в схемо-образном результате | ⬜ | Остаточный обход из ревью [#23](https://github.com/saifety-org/sAIfety/pull/23); требует NER |
+| Вложенные части имени (`given`/`family`) под person-полем не удерживают весь результат | ⬜ | Связано с [#23](https://github.com/saifety-org/sAIfety/pull/23) |
+| **Хуки и интеграции** | | |
+| Хуки Claude Code (`session-start`, `pre-tool-use`, `post-tool-use`) и `launch` | ✅ | [Запуск Claude под защитой](docs/configuration.md#запуск-claude-под-защитой-launch-и-хуки) |
+| `install`/`uninstall` для Claude Code, Claude Desktop, Cursor, Windsurf, VS Code | ✅ | [Защита MCP-клиента](#защита-mcp-клиента) |
+| Разрешение `@path`-импортов и `.claude/rules/*.md` в `session-start` | ⬜ | TODO в `internal/hook/hook.go` |
+| Мелкие дефекты из код-ревью (короткие строки в хуках, `.vscode/mcp.json`, окружение stdio-апстримов и др.) | ⬜ | [#28](https://github.com/saifety-org/sAIfety/issues/28) |
+| **CI и релизы** | | |
+| Обязательные проверки `lint`, `test`, `build` | ✅ | [#5](https://github.com/saifety-org/sAIfety/pull/5), [CI checks](#ci-checks) |
+| Release workflow по тегу `v*` с `VERSION.txt` и `SHA256SUMS` | ✅ | Релизов пока нет |
+| Закрепление SHA256 скачиваемых весов и ONNX Runtime | ⬜ | [#27](https://github.com/saifety-org/sAIfety/issues/27) |
+| Критерии экспериментального релиза 0.0.1 | ⬜ | [#11](https://github.com/saifety-org/sAIfety/issues/11) |
+| Правила подготовки и принятия PR | ⬜ | [#12](https://github.com/saifety-org/sAIfety/issues/12) |
+
+Обозначения: ✅ — готово и смёржено в `main`; 🚧 — в работе (открыт PR или
+есть несмёрженная ветка); ⬜ — не начато.
+
 ## Разработка и документация
 
 ```sh

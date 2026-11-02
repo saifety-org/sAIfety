@@ -146,7 +146,18 @@ func personValueCarrier(key string) bool {
 	return false
 }
 
+// metadataKeyName strips an "x-" vendor-extension prefix, which is not
+// semantically significant: x-widget denotes the same descriptor as widget.
+// personContainerKey and personMetadataValue both normalize through this so
+// their notions of a recognized metadata key cannot drift apart (an x- key
+// the value inspector treats as metadata but the key guard does not would
+// otherwise withhold an otherwise safe result).
+func metadataKeyName(key string) string {
+	return strings.TrimPrefix(key, "x-")
+}
+
 func personContainerKey(key string) bool {
+	key = metadataKeyName(key)
 	if schemaKeywords[key] || schemaAnnotationKeys[key] || personValueCarrier(key) {
 		return true
 	}

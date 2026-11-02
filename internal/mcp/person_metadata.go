@@ -15,7 +15,7 @@ import (
 // {"full_name":{"label":"John Smith"}} still contains personal data.
 // This deliberately favors privacy over preserving arbitrary UI copy.
 func personMetadataValue(key string, value any) bool {
-	key = strings.TrimPrefix(key, "x-")
+	key = metadataKeyName(key)
 	switch key {
 	case "enabled", "visible", "hidden", "disabled", "editable":
 		_, ok := value.(bool)
